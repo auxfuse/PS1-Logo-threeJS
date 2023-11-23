@@ -50,7 +50,7 @@ gltfLoader.load('ps_bake.glb', (gltf) => {
     gltf.scene.traverse((child) => {
         child.material = bakedMaterial;
     });
-    scene.position.set(-0.5,-1.5,1);
+    scene.position.set(0, -1.5, 0.25);
     scene.add(gltf.scene);
 
 });
@@ -83,9 +83,9 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(65, sizes.width / sizes.height, 0.1, 150);
-camera.position.x = 4
+camera.position.x = 4.5;
 camera.position.y = 4.25
-camera.position.z = 6
+camera.position.z = 7
 
 scene.add(camera)
 
