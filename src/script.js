@@ -3,19 +3,22 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-/**
- * Base
- */
-// Debug
-// const gui = new GUI({
-//     width: 400
-// })
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+const geometryCube = new THREE.BoxGeometry(6, 4, 5);
+const material = new THREE.MeshBasicMaterial({
+    wireframe: true,
+    transparent: true,
+    opacity: 0
+});
+const cube = new THREE.Mesh( geometryCube, material );
+cube.position.set(-0.5, 2, -2);
+
+scene.add(cube);
 
 /**
  * Loaders
@@ -45,14 +48,33 @@ const bakedMaterial = new THREE.MeshBasicMaterial({
 /**
  * Model
  */
+
+let psLogo;
+
 gltfLoader.load('ps_bake.glb', (gltf) => {
 
+    psLogo = gltf.scene;
+
     gltf.scene.traverse((child) => {
+        // child.userData.clickTarget = gltf.scene;
         child.material = bakedMaterial;
     });
-    scene.position.set(0, -1.5, 0.25);
-    scene.add(gltf.scene);
 
+    scene.add(psLogo);
+});
+
+scene.position.set(0, -1.5, 0.25);
+
+/**
+ * Raycaster
+ */
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('mousemove', (event) => {
+    mouse.x = (event.clientX / sizes.width) * 2 - 1;
+    mouse.y = (event.clientY / sizes.height) * 2 + 1;
 });
 
 /**
@@ -87,7 +109,7 @@ camera.position.x = 4.5;
 camera.position.y = 4.25
 camera.position.z = 7
 
-scene.add(camera)
+scene.add(camera);
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
@@ -97,6 +119,18 @@ controls.minPolarAngle = 0;
 controls.maxPolarAngle = Math.PI * 0.4;
 controls.minAzimuthAngle = - Math.PI * 0.75;
 controls.maxAzimuthAngle = Math.PI * 0.75;
+
+// Sound
+const listener = new THREE.AudioListener();
+camera.add(listener);
+let sound = new THREE.Audio(listener);
+
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('PS1Startup.mp3', (buffer) => {
+    sound.setBuffer(buffer);
+    sound.setVolume(0.025);
+    sound.autoplay = false;
+});
 
 /**
  * Renderer
@@ -118,7 +152,19 @@ const tick = () =>
     const elapsedTime = clock.getElapsedTime()
 
     // Update controls
-    controls.update()
+    controls.update();
+
+    // raycaster
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(scene.children, true);
+
+    window.addEventListener('click', () => {
+
+        if (intersects.length > 0) {
+            sound.play();
+        }
+    });
 
     // Render
     renderer.render(scene, camera)
